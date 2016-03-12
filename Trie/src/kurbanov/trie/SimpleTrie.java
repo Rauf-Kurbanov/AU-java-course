@@ -5,6 +5,11 @@ import java.util.Map;
 
 public class SimpleTrie implements Trie {
 
+    private int startsWith;
+    private int size;
+    private boolean isEndOfStr;
+    private final Map<Character, SimpleTrie> children;
+
     public SimpleTrie() {
         children = new HashMap<>();
         isEndOfStr = false;
@@ -14,55 +19,17 @@ public class SimpleTrie implements Trie {
 
     @Override
     public boolean add(String element) {
-        if (contains(element))
-            return false;
-        if (element.isEmpty()) {
-            if (!isEndOfStr) {
-                isEndOfStr = true;
-                startsWith++;
-            }
-        } else {
-            char letter = element.charAt(0);
-            String tail = element.substring(1);
-            SimpleTrie newNode = children.getOrDefault(letter, new SimpleTrie());
-            if (newNode.add(tail))
-                startsWith++;
-            children.put(letter, newNode);
-        }
-        size++;
-        return true;
+        return add(element, 0);
     }
 
     @Override
     public boolean contains(String element) {
-        if (element.isEmpty()) {
-            return isEndOfStr;
-        }
-        char letter = element.charAt(0);
-        String tail = element.substring(1);
-        return children.containsKey(letter) && children.get(letter).contains(tail);
+        return contains(element, 0);
     }
 
     @Override
     public boolean remove(String element) {
-        if (!contains(element))
-            return false;
-
-        if (element.isEmpty()) {
-            isEndOfStr = false;
-        } else {
-            char letter = element.charAt(0);
-            String tail = element.substring(1);
-            SimpleTrie toDel = children.get(letter);
-            if (toDel.startsWith == 1) {
-                children.remove(letter);
-            } else {
-                toDel.remove(tail);
-            }
-        }
-        startsWith--;
-        size--;
-        return true;
+        return remove(element, 0);
     }
 
     @Override
@@ -72,37 +39,81 @@ public class SimpleTrie implements Trie {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        if (prefix.isEmpty()) {
-            return startsWith;
-        }
-        char letter = prefix.charAt(0);
-        String tail = prefix.substring(1);
-        if (children.containsKey(letter)) {
-            return children.get(letter).howManyStartsWithPrefix(tail);
-        }
-        return 0;
+        return howManyStartsWithPrefix(prefix, 0);
     }
 
     public String trace(int nSpaces) {
-        String res = "";
-        for (Map.Entry<Character, SimpleTrie> entry : children.entrySet())
-        {
+        StringBuilder res = new StringBuilder();
+        for (Map.Entry<Character, SimpleTrie> entry : children.entrySet()) {
             for (int i = 0; i < nSpaces; i++) {
-                res += "  ";
+                res.append("  ");
             }
-            res += entry.getKey().toString();
+            res.append(entry.getKey().toString());
             if (entry.getValue().isEndOfStr) {
-                res += "<>";
+                res.append("<>");
             } else {
-                res += "  ";
+                res.append("  ");
             }
-            res += "\n" + entry.getValue().trace(nSpaces + 2);
+            res.append("\n" + entry.getValue().trace(nSpaces + 2));
         }
-        return res;
+        return res.toString();
     }
 
-    private int startsWith;
-    private int size;
-    private boolean isEndOfStr;
-    private Map<Character, SimpleTrie> children;
+    private boolean add(String element, int from) {
+        if (contains(element)) {
+            return false;
+        }
+        if (from >= element.length()) {
+            isEndOfStr = true;
+            startsWith++;
+        } else {
+            char letter = element.charAt(from);
+            SimpleTrie newNode = children.getOrDefault(letter, new SimpleTrie());
+            if (newNode.add(element, from + 1)) {
+                startsWith++;
+            }
+            children.put(letter, newNode);
+        }
+        size++;
+        return true;
+    }
+
+    private boolean contains(String element, int from) {
+        if (from >= element.length()) {
+            return isEndOfStr;
+        }
+        char letter = element.charAt(from);
+        return children.containsKey(letter) && children.get(letter).contains(element, from + 1);
+    }
+
+    private boolean remove(String element, int from) {
+        if (!contains(element, from)) {
+            return false;
+        }
+        if (from >= element.length()) {
+            isEndOfStr = false;
+        } else {
+            char letter = element.charAt(from);
+            SimpleTrie toDel = children.get(letter);
+            if (toDel.startsWith == 1) {
+                children.remove(letter);
+            } else {
+                toDel.remove(element, from + 1);
+            }
+        }
+        startsWith--;
+        size--;
+        return true;
+    }
+
+    private int howManyStartsWithPrefix(String prefix, int from) {
+        if (from >= prefix.length()) {
+            return startsWith;
+        }
+        char letter = prefix.charAt(from);
+        if (children.containsKey(letter)) {
+            return children.get(letter).howManyStartsWithPrefix(prefix, from + 1);
+        }
+        return 0;
+    }
 }

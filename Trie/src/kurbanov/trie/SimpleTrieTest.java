@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 public class SimpleTrieTest {
 
+    private SimpleTrie instance;
+
     @org.junit.Before
     public void setUp() throws Exception {
         instance = new SimpleTrie();
@@ -11,11 +13,6 @@ public class SimpleTrieTest {
         instance.add("she");
         instance.add("his");
         instance.add("hers");
-    }
-
-    @org.junit.After
-    public void tearDown() throws Exception {
-
     }
 
     @org.junit.Test
@@ -145,6 +142,4 @@ public class SimpleTrieTest {
                         "          s<>\n"
                 , instance.trace(1));
     }
-
-    SimpleTrie instance;
 }
