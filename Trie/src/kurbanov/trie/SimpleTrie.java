@@ -1,9 +1,10 @@
 package kurbanov.trie;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleTrie implements Trie {
+public class SimpleTrie implements Trie, StreamSerializable {
 
     private int startsWith;
     private int size;
@@ -57,6 +58,35 @@ public class SimpleTrie implements Trie {
             res.append("\n" + entry.getValue().trace(nSpaces + 2));
         }
         return res.toString();
+    }
+
+    @Override
+    public void serialize(OutputStream out) throws IOException {
+        DataOutputStream dataOStream = new DataOutputStream(out);
+        dataOStream.writeBoolean(isEndOfStr);
+        dataOStream.writeInt(startsWith);
+        dataOStream.writeInt(children.size());
+
+        for (Map.Entry<Character, SimpleTrie> mapEntry : children.entrySet()) {
+            dataOStream.writeChar(mapEntry.getKey());
+            mapEntry.getValue().serialize(out);
+        }
+    }
+
+    @Override
+    public void deserialize(InputStream in) throws IOException {
+        DataInputStream dataInStream = new DataInputStream(in);
+        isEndOfStr = dataInStream.readBoolean();
+        startsWith = dataInStream.readInt();
+        children.clear();
+        int childrenCount = dataInStream.readInt();
+
+        for (int i = 0; i < childrenCount; i++) {
+            char sym = dataInStream.readChar();
+            SimpleTrie newTrie = new SimpleTrie();
+            newTrie.deserialize(in);
+            children.put(sym, newTrie);
+        }
     }
 
     private boolean add(String element, int from) {
