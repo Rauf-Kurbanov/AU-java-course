@@ -6,7 +6,6 @@ import java.util.Map;
 public class SimpleTrie implements Trie {
 
     private int startsWith;
-    private int size;
     private boolean isEndOfStr;
     private final Map<Character, SimpleTrie> children;
 
@@ -14,7 +13,6 @@ public class SimpleTrie implements Trie {
         children = new HashMap<>();
         isEndOfStr = false;
         startsWith = 0;
-        size = 0;
     }
 
     @Override
@@ -34,7 +32,7 @@ public class SimpleTrie implements Trie {
 
     @Override
     public int size() {
-        return size;
+        return startsWith;
     }
 
     @Override
@@ -42,25 +40,30 @@ public class SimpleTrie implements Trie {
         return howManyStartsWithPrefix(prefix, 0);
     }
 
-    public String trace(int nSpaces) {
+    public String trace() {
+        return trace(1);
+    }
+
+    private String trace(int nSpaces) {
         StringBuilder res = new StringBuilder();
         for (Map.Entry<Character, SimpleTrie> entry : children.entrySet()) {
             for (int i = 0; i < nSpaces; i++) {
                 res.append("  ");
             }
-            res.append(entry.getKey().toString());
+            res.append(entry.getKey());
             if (entry.getValue().isEndOfStr) {
                 res.append("<>");
             } else {
                 res.append("  ");
             }
-            res.append("\n" + entry.getValue().trace(nSpaces + 2));
+            res.append("\n");
+            res.append(entry.getValue().trace(nSpaces + 2));
         }
         return res.toString();
     }
 
     private boolean add(String element, int from) {
-        if (contains(element)) {
+        if (contains(element, from)) {
             return false;
         }
         if (from >= element.length()) {
@@ -74,7 +77,7 @@ public class SimpleTrie implements Trie {
             }
             children.put(letter, newNode);
         }
-        size++;
+
         return true;
     }
 
@@ -102,7 +105,6 @@ public class SimpleTrie implements Trie {
             }
         }
         startsWith--;
-        size--;
         return true;
     }
 

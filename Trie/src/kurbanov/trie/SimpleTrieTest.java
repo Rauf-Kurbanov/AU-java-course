@@ -29,7 +29,7 @@ public class SimpleTrieTest {
                         "              s<>\n" +
                         "      i  \n" +
                         "          s<>\n"
-                , instance.trace(1));
+                , instance.trace());
     }
 
     @org.junit.Test
@@ -68,7 +68,7 @@ public class SimpleTrieTest {
                         "              s<>\n" +
                         "      i  \n" +
                         "          s<>\n"
-                , instance.trace(1));
+                , instance.trace());
         instance.add("shenanigans");
         instance.remove("shenanigans");
         assertEquals("  s  \n" +
@@ -80,7 +80,7 @@ public class SimpleTrieTest {
                         "              s<>\n" +
                         "      i  \n" +
                         "          s<>\n"
-                , instance.trace(1));
+                , instance.trace());
     }
 
     @org.junit.Test
@@ -95,7 +95,7 @@ public class SimpleTrieTest {
                         "              s<>\n" +
                         "      i  \n" +
                         "          s<>\n"
-                , instance.trace(1));
+                , instance.trace());
     }
 
     @org.junit.Test
@@ -140,6 +140,15 @@ public class SimpleTrieTest {
                         "              s<>\n" +
                         "      i  \n" +
                         "          s<>\n"
-                , instance.trace(1));
+                , instance.trace());
+    }
+
+    @org.junit.Test
+    public void failed() {
+        final SimpleTrie trie = new SimpleTrie();
+
+        assertTrue(trie.add("aaa"));
+        assertTrue(trie.add("aa"));
+        assertEquals(2, trie.howManyStartsWithPrefix(""));
     }
 }
