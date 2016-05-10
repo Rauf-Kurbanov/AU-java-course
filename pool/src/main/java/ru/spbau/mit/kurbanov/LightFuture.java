@@ -65,7 +65,6 @@ public class LightFuture<T> {
         flushWaiting();
     }
 
-
     public synchronized void setLeException(Exception e) {
         this.leException = new LightExecutionException(e);
         notify();

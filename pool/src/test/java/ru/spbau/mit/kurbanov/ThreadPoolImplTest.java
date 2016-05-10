@@ -5,11 +5,15 @@ import org.junit.Test;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
 public class ThreadPoolImplTest {
 
+    private final int N_THREAD = 10;
+    
     @Test
     public void testAdd() throws Exception {
 
@@ -22,7 +26,7 @@ public class ThreadPoolImplTest {
             }
         };
 
-        final ThreadPool pool = new ThreadPoolImpl(10);
+        final ThreadPool pool = new ThreadPoolImpl(N_THREAD);
         final Queue<LightFuture<Integer>> results = new LinkedList<>();
         final int SUM = 1000000;
         for (int i = 0; i < SUM; ++i) {
@@ -43,21 +47,23 @@ public class ThreadPoolImplTest {
 
     @Test
     public void testThreadCount() throws InterruptedException {
-        final ThreadPool pool = new ThreadPoolImpl(10);
-        final Barrier barrier = new Barrier(10);
+        final ThreadPool pool = new ThreadPoolImpl(N_THREAD);
+        final Barrier barrier = new Barrier(N_THREAD);
 
         final int[] result = {0};
+        
+        Stream
+                .iterate(0, x -> x + 1)
+                .limit(9)
+                .peek(i -> pool.add(() -> {
+                    try {
+                        barrier.await();
+                    } catch (InterruptedException ignored) {}
 
-        for (int i = 0; i < 9; i++) {
-            pool.add(() -> {
-                try {
-                    barrier.await();
-                } catch (InterruptedException ignored) {}
-
-                result[0]++;
-                return 0;
-            });
-        }
+                    result[0]++;
+                    return 0;
+                }))
+                .collect(Collectors.toList());
 
         barrier.await();
         pool.shutdown();
@@ -67,7 +73,7 @@ public class ThreadPoolImplTest {
 
     @Test
     public void testThenApply() throws LightExecutionException, InterruptedException {
-        final ThreadPool pool = new ThreadPoolImpl(10);
+        final ThreadPool pool = new ThreadPoolImpl(N_THREAD);
 
         int result = pool
                 .add(() -> 1)
@@ -88,7 +94,7 @@ public class ThreadPoolImplTest {
 
     @Test(expected = LightExecutionException.class)
     public void checkExceptions() throws LightExecutionException, InterruptedException {
-        final ThreadPool pool = new ThreadPoolImpl(10);
+        final ThreadPool pool = new ThreadPoolImpl(N_THREAD);
 
         pool.add(() -> {
             throw new IllegalStateException();

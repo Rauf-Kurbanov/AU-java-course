@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class ThreadPoolImpl implements ThreadPool {
 
@@ -12,11 +13,12 @@ public class ThreadPoolImpl implements ThreadPool {
     private final List<Thread> threads = new ArrayList<>();
 
     public ThreadPoolImpl(int count) {
-        for (int i = 0; i < count; i++) {
-            final Worker worker = new Worker(tasks);
-            worker.start();
-            threads.add(worker);
-        }
+        Stream
+                .iterate(0, x -> x + 1)
+                .limit(count)
+                .map(i -> new Worker(tasks))
+                .peek(Worker::start)
+                .forEach(threads::add);
     }
 
     public void addTask(Runnable task) {
