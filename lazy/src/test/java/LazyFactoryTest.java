@@ -7,50 +7,91 @@ import static junit.framework.TestCase.assertEquals;
 public class LazyFactoryTest {
 
     private static volatile int state = 0;
-    private static final int initalState = 42;
+    private static final int initialState = 42;
 
-    private static final Supplier<String> CANDY_SUPPLIER = ()-> "candy";
-    private static final Supplier NULL_SUPPLIER = ()-> null;
     private static final Supplier<Integer> STATE_CHANGER = ()-> state++;
+
+    private static class TestNullSupplier<T> implements Supplier<T> {
+
+        private int timesCalled = 0;
+
+        @Override
+        public T get() {
+            timesCalled++;
+            return null;
+        }
+    }
 
     @org.junit.Before
     public void setUp() throws Exception {
-        state = initalState;
+        state = initialState;
     }
 
     @org.junit.Test
     public void singleThreaded() throws Exception {
         Lazy<Integer> singleLazy = LazyFactory.singleThreaded(STATE_CHANGER);
-        assertEquals(initalState, (int) singleLazy.get());
-        assertEquals(initalState, (int) singleLazy.get());
-        assertEquals(initalState, (int) singleLazy.get());
-        assertEquals(initalState, (int) singleLazy.get());
-        assertEquals(initalState + 1, state);
+        runALot(singleLazy);
+        assertEquals(initialState + 1, state);
     }
 
     @org.junit.Test
     public void multiThreaded() throws Exception {
-        final int nthreads = 1000;
-        ExecutorService pool = Executors.newFixedThreadPool(nthreads);
         Lazy<Integer> lazy = new MultiLazyImpl<>(STATE_CHANGER);
-        for (int i = 0; i < 1000000; i++) {
-            pool.execute(() -> lazy.get());
-        }
-        System.out.println(state);
-        assertEquals(initalState + 1, state);
+        runALot(lazy);
+        assertEquals(initialState + 1, state);
     }
 
     @org.junit.Test
     public void testGetLockfreeLazy() throws Exception {
+        Lazy lazyLock = LazyFactory.lockFree(STATE_CHANGER);
+        assertEquals(initialState, state);
+        runALot(lazyLock);
+        assertEquals(initialState + 1, state);
+    }
+
+    @org.junit.Test
+    public void testLockFreeLazyNull() throws Exception {
+        TestNullSupplier tns = new TestNullSupplier();
+        Lazy lazy = LazyFactory.lockFree(tns);
+        testNull(lazy, tns);
+    }
+
+    @org.junit.Test
+    public void testSingleThreadedLazyNull() throws Exception {
+        TestNullSupplier tns = new TestNullSupplier();
+        Lazy lazy = LazyFactory.singleThreaded(tns);
+        runALot(lazy);
+        assertEquals(1, tns.timesCalled);
+        assertEquals(null, lazy.get());
+    }
+
+    @org.junit.Test
+    public void testMultiThreadedLazyNull() throws Exception {
+        TestNullSupplier tns = new TestNullSupplier();
+        Lazy lazy = LazyFactory.multiThreaded(tns);
+        testNull(lazy, tns);
+    }
+
+    @org.junit.Test
+    public void testGetLockfreeLazyNull() throws Exception {
+        TestNullSupplier tns = new TestNullSupplier();
+        Lazy lazy = LazyFactory.lockFree(tns);
+        testNull(lazy, tns);
+    }
+
+    private <T> void testNull(Lazy<T> lazy, TestNullSupplier tns) {
+        runALot(lazy);
+        assertEquals(1, tns.timesCalled);
+        assertEquals(null, lazy.get());
+    }
+
+    private <T> void runALot(Lazy<T> lazy) {
         final int nthreads = 100;
         final int ncalls= 1000000;
 
-        Lazy lazyLock = LazyFactory.lockFree(STATE_CHANGER);
-        assertEquals(initalState, state);
         ExecutorService pool = Executors.newFixedThreadPool(nthreads);
         for (int i = 0; i < ncalls; i++) {
-            pool.execute(lazyLock::get);
+            pool.execute(lazy::get);
         }
-        assertEquals(initalState + 1, state);
     }
 }
