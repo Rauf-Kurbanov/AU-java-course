@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public interface Repository {
 
-    void add(String fileName);
+    void add(String fileName) throws IOException;
 
     void commit(String message) throws IOException;
 
@@ -14,7 +14,7 @@ public interface Repository {
 
     void checkout(String branchName);
 
-    void log();
+    String log();
 
     void merge(String branchName);
 }

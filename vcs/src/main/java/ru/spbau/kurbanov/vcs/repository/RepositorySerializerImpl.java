@@ -8,8 +8,7 @@ import java.io.*;
 
 public class RepositorySerializerImpl implements RepositorySerializer {
 
-    // TODO move into argument?
-    public static final String SERIALIZED_PATH = ".vcs/repo.ser";
+    public final String SERIALIZED_PATH = ".vcs/repo.ser";
 
     @Override
     public void serialize(@NotNull Repository repo) throws IOException {
@@ -21,19 +20,19 @@ public class RepositorySerializerImpl implements RepositorySerializer {
     }
 
     @Override
-    public Repository deserialize() {
+    public Repository deserialize(File path) {
         if (!new File(SERIALIZED_PATH).exists()) {
             System.out.format("Can't find file %s", SERIALIZED_PATH);
-            return new RepositoryImpl();
+            return new RepositoryImpl(path);
         }
         try (FileInputStream fileIn = new FileInputStream(SERIALIZED_PATH);
              ObjectInputStream in = new ObjectInputStream(fileIn)) {
-            return (RepositoryImpl) in.readObject();
+            return (Repository) in.readObject();
         } catch (IOException e) {
             System.out.format("Can't open file %s", SERIALIZED_PATH);
         } catch (ClassNotFoundException e) {
             System.out.println("Cant find serialized Repository object");
         }
-        return new RepositoryImpl();
+        return new RepositoryImpl(path);
     }
 }

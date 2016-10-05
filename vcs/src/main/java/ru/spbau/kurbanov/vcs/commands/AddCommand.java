@@ -5,6 +5,7 @@ import com.beust.jcommander.Parameters;
 import ru.spbau.kurbanov.vcs.api.Command;
 import ru.spbau.kurbanov.vcs.api.Repository;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class AddCommand extends Command {
     }
 
     @Override
-    public void execute() {
+    public void execute() throws IOException {
         for (String fileName : fileNames) {
             repo.add(fileName);
         }

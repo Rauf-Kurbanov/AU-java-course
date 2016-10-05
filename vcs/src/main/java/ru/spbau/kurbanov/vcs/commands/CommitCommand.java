@@ -18,10 +18,7 @@ public class CommitCommand extends Command {
     }
 
     @Override
-    public void execute() {
-        try {
-            repo.commit(message);
-//            TODO
-        } catch (IOException ignored) {}
+    public void execute() throws IOException {
+        repo.commit(message);
     }
 }

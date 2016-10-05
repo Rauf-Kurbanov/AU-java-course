@@ -8,13 +8,14 @@ import ru.spbau.kurbanov.vcs.api.RepositorySerializer;
 import ru.spbau.kurbanov.vcs.commands.*;
 import ru.spbau.kurbanov.vcs.repository.RepositorySerializerImpl;
 
+import java.io.File;
 import java.io.IOException;
 
 public class Driver {
 
+    private static final File projRoot = new File("/home/rauf/Programs/semester_3/java/AU-java-course/vcs/testDir");
     private static final RepositorySerializer serializer = new RepositorySerializerImpl();
-    // TODO add path as an argument
-    private static final Repository repo = serializer.deserialize();
+    private static final Repository repo = serializer.deserialize(projRoot);
     private static final JCommander commandParser = new JCommander();
 
     static {
@@ -28,7 +29,7 @@ public class Driver {
 
     public static void main(String[] args) throws IOException {
 
-        String[] testArgs = {"add", "vcs.jar"};
+        String[] testArgs = {"commit", "-m", "asdda"};
         args = testArgs;
 
         try {
@@ -47,7 +48,12 @@ public class Driver {
         String parsedCommand = commandParser.getParsedCommand();
         JCommander parsedJCommander = commandParser.getCommands().get(parsedCommand);
         Command commandObject = (Command) parsedJCommander.getObjects().get(0);
-        commandObject.execute();
+
+        try {
+            commandObject.execute();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
         serializer.serialize(repo);
     }
