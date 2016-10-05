@@ -2,11 +2,11 @@ package ru.spbau.kurbanov.vcs;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
-import ru.spbau.kurbanov.vcs.api.Command;
-import ru.spbau.kurbanov.vcs.api.Repository;
-import ru.spbau.kurbanov.vcs.api.RepositorySerializer;
 import ru.spbau.kurbanov.vcs.commands.*;
-import ru.spbau.kurbanov.vcs.repository.RepositorySerializerImpl;
+import ru.spbau.kurbanov.vcs.repository.api.Command;
+import ru.spbau.kurbanov.vcs.repository.api.Repository;
+import ru.spbau.kurbanov.vcs.repository.api.RepositoryFactory;
+import ru.spbau.kurbanov.vcs.repository.impl.RepositorySerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,7 @@ import java.io.IOException;
 public class Driver {
 
     private static final File projRoot = new File("/home/rauf/Programs/semester_3/java/AU-java-course/vcs/testDir");
-    private static final RepositorySerializer serializer = new RepositorySerializerImpl();
-    private static final Repository repo = serializer.deserialize(projRoot);
+    private static final Repository repo = RepositoryFactory.initRepo(projRoot);
     private static final JCommander commandParser = new JCommander();
 
     static {
@@ -55,6 +54,6 @@ public class Driver {
             System.out.println(e.getMessage());
         }
 
-        serializer.serialize(repo);
+        RepositorySerializer.serialize(repo);
     }
 }

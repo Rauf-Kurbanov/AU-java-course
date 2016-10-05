@@ -1,4 +1,4 @@
-package ru.spbau.kurbanov.vcs.api;
+package ru.spbau.kurbanov.vcs.repository.api;
 
 import lombok.RequiredArgsConstructor;
 

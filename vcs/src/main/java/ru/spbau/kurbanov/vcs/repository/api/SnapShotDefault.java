@@ -1,26 +1,22 @@
-package ru.spbau.kurbanov.vcs.api;
+package ru.spbau.kurbanov.vcs.repository.api;
 
 import com.sun.istack.internal.NotNull;
-import ru.spbau.kurbanov.vcs.repository.SnapShotSer;
+import ru.spbau.kurbanov.vcs.repository.impl.SnapShotSer;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public interface SnapShot {
+public interface SnapShotDefault extends SnapShot {
 
-    void add(@NotNull File file) throws IOException;
-
+    @Override
     @NotNull
     default boolean isEmpty() {
         return getFiles().isEmpty();
     }
 
-    Map<String, byte[]> getFiles();
-
+    @Override
     @NotNull
     default Map<String, byte[]> intersection(@NotNull SnapShot other) {
         Set<Map.Entry<String, byte[]>> intersection = new HashSet<>(getFiles().entrySet());
@@ -29,13 +25,15 @@ public interface SnapShot {
         return intersection.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    default SnapShot union(@NotNull SnapShot other) {
+    @Override
+    default SnapShotDefault union(@NotNull SnapShot other) {
         Set<Map.Entry<String, byte[]>> filesUnion = new HashSet<>(getFiles().entrySet());
         filesUnion.addAll(other.getFiles().entrySet());
 
         return new SnapShotSer(filesUnion);
     }
 
+    @Override
     default Set<String> diff(@NotNull SnapShot other) {
         return intersection(other).keySet().stream()
                 .filter(n -> getFiles().get(n) != other.getFiles().get(n))

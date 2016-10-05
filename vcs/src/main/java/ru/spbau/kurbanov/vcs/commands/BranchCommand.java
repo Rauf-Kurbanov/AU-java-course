@@ -2,8 +2,8 @@ package ru.spbau.kurbanov.vcs.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import ru.spbau.kurbanov.vcs.api.Command;
-import ru.spbau.kurbanov.vcs.api.Repository;
+import ru.spbau.kurbanov.vcs.repository.api.Command;
+import ru.spbau.kurbanov.vcs.repository.api.Repository;
 
 @Parameters(commandDescription = "List, create, or delete branches")
 public class BranchCommand extends Command {

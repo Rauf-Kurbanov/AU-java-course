@@ -1,42 +1,47 @@
-package ru.spbau.kurbanov.vcs.repository;
+package ru.spbau.kurbanov.vcs.repository.api;
 
 import com.sun.istack.internal.NotNull;
 import lombok.Getter;
-import ru.spbau.kurbanov.vcs.api.Branch;
-import ru.spbau.kurbanov.vcs.api.Commit;
-import ru.spbau.kurbanov.vcs.api.Repository;
-import ru.spbau.kurbanov.vcs.api.SnapShot;
+import ru.spbau.kurbanov.vcs.repository.impl.Branch;
+import ru.spbau.kurbanov.vcs.repository.impl.CommitImpl;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-public class RepositoryImpl implements Repository, Serializable {
+public abstract class RepositoryDef implements Repository, Serializable {
 
     private final File pwd;
     public final String META_DIR_NAME = ".vcs";
     private static final String MASTER = "master";
 
+    private final SnapShotFactory snapShotFactory;
+    private final CommitFactory commitFactory;
+
     @Getter
     private final ArrayList<Commit> allCommits = new ArrayList<>();
 
-
     @Getter
-    private HashMap<String, Branch> branches = new HashMap<>();
+    private Map<String, Branch> branches = new HashMap<>();
 
     @Getter
     private Branch head;
 
-    public RepositoryImpl(@NotNull File pwd) {
+    public RepositoryDef(@NotNull File pwd,
+                         SnapShotFactory snapShotFactory,
+                         CommitFactory commitFactory) {
+        this.snapShotFactory = snapShotFactory;
+        this.commitFactory = commitFactory;
         this.pwd = pwd;
 
-        branches.put(MASTER, new BranchImpl(null, MASTER));
+        branches.put(MASTER, new Branch(null, MASTER));
         head = branches.get(MASTER);
 
         File vcsDir = new File(pwd, META_DIR_NAME);
@@ -59,10 +64,11 @@ public class RepositoryImpl implements Repository, Serializable {
 
         final int currCommitId = allCommits.size();
 
-        Commit newCommit = new CommitImpl(currCommitId, head, message);
+        Commit newCommit = commitFactory.newCommit(currCommitId, head, message);
         allCommits.add(newCommit);
         head.setCurrentCommit(newCommit);
-        head.setCurrSnapShot(new SnapShotSer());
+        // TODO emptySnapShot
+        head.setCurrSnapShot(snapShotFactory.emptySnapshot());
     }
 
     @Override
@@ -70,7 +76,7 @@ public class RepositoryImpl implements Repository, Serializable {
         checkArgument(!branches.containsKey(branchName),
                 String.format("fatal: A branch named %s already exists.", branchName));
 
-        Branch newBranch = new BranchImpl(head.getCurrentCommit(), branchName);
+        Branch newBranch = new Branch(head.getCurrentCommit(), branchName);
         branches.put(branchName, newBranch);
     }
 
@@ -130,11 +136,11 @@ public class RepositoryImpl implements Repository, Serializable {
 
         // TODO
         if (thisSnapShot.diff(otherSnapShot).isEmpty()) {
-            mergeCommit = new CommitImpl(allCommits.size(),
+            mergeCommit = commitFactory.mergeCommit(
+                    allCommits.size(),
                     head,
                     otherBranch,
                     commitMessage);
-
         } else {
             Branch latest = thisCommit.getId() > otherCommit.getId() ? head : otherBranch;
             mergeCommit = new CommitImpl(allCommits.size(),

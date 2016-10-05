@@ -1,9 +1,9 @@
-package ru.spbau.kurbanov.vcs.repository;
+package ru.spbau.kurbanov.vcs.repository.impl;
 
 import com.sun.istack.internal.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import ru.spbau.kurbanov.vcs.api.SnapShot;
+import ru.spbau.kurbanov.vcs.repository.api.SnapShotDefault;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode
-public class SnapShotSer implements SnapShot {
+public class SnapShotSer implements SnapShotDefault {
 
     @Getter
     private final Map<String, byte[]> files;
