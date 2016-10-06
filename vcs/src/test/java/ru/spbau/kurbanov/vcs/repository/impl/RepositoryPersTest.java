@@ -1,9 +1,8 @@
-package ru.spbau.kurbanov.vcs.repository;
+package ru.spbau.kurbanov.vcs.repository.impl;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import ru.spbau.kurbanov.vcs.repository.impl.RepositorySer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,12 +18,12 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 
+public class RepositoryPersTest {
 
-public class RepositorySerTest {
     public TemporaryFolder tmpFolder;
     public File projRoot;
 
-    private static RepositorySer repo;
+    private static RepositoryPers repo;
     private String[] fileNames;
 
     @Before
@@ -42,7 +41,7 @@ public class RepositorySerTest {
             tmpFolder.newFile(fn).createNewFile();
         }
 
-        repo = new RepositorySer(projRoot);
+        repo = new RepositoryPers(projRoot);
     }
 
     @Test
@@ -198,4 +197,5 @@ public class RepositorySerTest {
         repo.commit("overwriting");
         repo.merge("master");
     }
+
 }

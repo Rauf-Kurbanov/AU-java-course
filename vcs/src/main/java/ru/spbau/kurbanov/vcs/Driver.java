@@ -14,7 +14,7 @@ import java.io.IOException;
 public class Driver {
 
     private static final File projRoot = new File("/home/rauf/Programs/semester_3/java/AU-java-course/vcs/testDir");
-    private static final Repository repo = RepositoryFactory.initRepo(projRoot);
+    private static final Repository repo = RepositoryFactory.initRepoSer(projRoot);
     private static final JCommander commandParser = new JCommander();
 
     static {
@@ -24,6 +24,10 @@ public class Driver {
         commandParser.addCommand("checkout", new CheckoutCommand(repo));
         commandParser.addCommand("log", new LogCommand(repo));
         commandParser.addCommand("merge", new MergeCommand(repo));
+        commandParser.addCommand("status", new StatusCommand(repo));
+        commandParser.addCommand("reset", new ResetCommand(repo));
+        commandParser.addCommand("rm", new RmCommand(repo));
+        commandParser.addCommand("clean", new CleanCommand(repo));
     }
 
     public static void main(String[] args) throws IOException {
