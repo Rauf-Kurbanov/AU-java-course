@@ -1,8 +1,7 @@
 package client;
 
-import protocol.FtpProtocol;
-import protocol.Protocol;
 import protocol.FtpFile;
+import protocol.FtpProtocol;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -11,49 +10,32 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
-public class FtpClient implements Client {
+public class FtpClient {
 
-    private boolean connected = false;
     private Socket clientSocket;
     private DataOutputStream netOut;
     private DataInputStream netIn;
-    final Protocol protocol = new FtpProtocol();
+    private final FtpProtocol protocol = new FtpProtocol();
 
-    @Override
-    public void connect(String hostName, int port) throws IOException {
-        if (connected)
-            return;
-
+    public FtpClient(String hostName, int port) throws IOException {
         clientSocket = new Socket(hostName, port);
         netOut = new DataOutputStream(clientSocket.getOutputStream());
         netIn = new DataInputStream(clientSocket.getInputStream());
-
-        connected = true;
     }
 
-    @Override
     public void disconnect() throws IOException {
-        if (!connected)
-            return;
-
-        netIn.close();
-        netOut.close();
+        netOut.writeInt(-1);
+        netOut.flush();
         clientSocket.close();
     }
 
-    @Override
     public List<FtpFile> executeList(String path) throws IOException {
-        if (!connected)
-            return null;
-        protocol.answerList(path, netOut);
+        protocol.sendListRequest(path, netOut);
         return protocol.readListResponse(netIn);
     }
 
-    @Override
     public void executeGet(String path, OutputStream out) throws IOException {
-        if (!connected)
-            return;
-        protocol.answerGet(path, netOut);
+        protocol.sendGetRequest(path, netOut);
         protocol.readGetResponse(netIn, out);
     }
 }
