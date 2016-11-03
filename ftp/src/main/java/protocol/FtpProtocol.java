@@ -1,16 +1,26 @@
 package protocol;
 
 import lombok.extern.slf4j.Slf4j;
+import protocol.handlers.GetHandler;
+import protocol.handlers.ListHandler;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class FtpProtocol {
+public class FtpProtocol implements Protocol {
+
+    {
+        handlerByCommand.put(1, new ListHandler());
+        handlerByCommand.put(2, new GetHandler());
+    }
 
     public void sendListRequest(String path, DataOutputStream output) throws IOException {
+        log.info("sendListRequest");
         output.writeInt(1);
         output.writeUTF(path);
     }
@@ -49,52 +59,5 @@ public class FtpProtocol {
             size -= (long) len;
             bytesToRead = (long) len > size ? (int) size : len;
         }
-    }
-
-    public void answerQuery(DataInputStream in, DataOutputStream out) {
-        log.info("answerQuery");
-        try {
-            Command request;
-            while ((request = Command.fromInt(in.readInt())) != Command.DISCONNECT) {
-                switch (request) {
-                    case LIST:
-                        formListResponse(in.readUTF(), out);
-                        break;
-                    case GET:
-                        formGetResponse(in.readUTF(), out);
-                        break;
-                    default:
-                        System.out.format("Unknown Command %d", request);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Socket was closed");
-        }
-    }
-
-    private void formListResponse(String path, DataOutputStream out) throws IOException {
-        log.info("formListResponse");
-        File f = new File(path);
-        if (!f.exists() || f.isFile()) {
-            out.writeInt(0);
-            return;
-        }
-        File[] dir = f.listFiles();
-        out.writeInt(dir.length);
-        for (File fin : dir) {
-            out.writeUTF(fin.getAbsolutePath());
-            out.writeBoolean(fin.isDirectory());
-        }
-    }
-
-    private void formGetResponse(String path, DataOutputStream out) throws IOException {
-        log.info("formGetResponse");
-        File f = new File(path);
-        if (!f.exists()) {
-            out.writeLong(0);
-            return;
-        }
-        out.writeLong(f.length());
-        Files.copy(f.toPath(), out);
     }
 }

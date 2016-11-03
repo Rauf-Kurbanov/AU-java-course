@@ -1,7 +1,8 @@
 package server;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import protocol.FtpProtocol;
+import protocol.Protocol;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -12,13 +13,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Slf4j
-public class FtpServer {
+@RequiredArgsConstructor
+public class ThreadPooledServer implements Server {
 
     private final ExecutorService serverThreadExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final Protocol protocol;
     private ServerSocket serverSocket;
 
-    private void runServer(int portNumber, FtpProtocol protocol) throws IOException {
+    private void runServer(int portNumber) throws IOException {
         log.info("Trying to accept socket");
         serverSocket = new ServerSocket(portNumber);
         while (!serverSocket.isClosed()) {
@@ -27,8 +30,8 @@ public class FtpServer {
                 Socket clientSocket = serverSocket.accept();
                 log.info("Exiting serverSocket.accept()");
 
-                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
                 DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
                 executor.execute(() -> protocol.answerQuery(in, out));
                 log.info("Passed query processing");
             } catch (IOException e) {
@@ -37,17 +40,18 @@ public class FtpServer {
         }
     }
 
-
-    public void start(int portNumber, FtpProtocol protocol) {
+    @Override
+    public void start(int portNumber) {
         serverThreadExecutor.execute(() -> {
             try {
-                runServer(portNumber, protocol);
+                runServer(portNumber);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
     }
 
+    @Override
     public void stop() {
         log.info("stopping server");
         try {

@@ -32,7 +32,7 @@ public class FtpClientServerTest {
     private ByteArrayOutputStream outContent;
 
     static final int portNumber = 1234;
-    private FtpServer server;
+    private ThreadPooledServer server;
     private FtpClient client;
 
     @Before
@@ -46,9 +46,8 @@ public class FtpClientServerTest {
         FileUtils.writeByteArrayToFile(file, F2DIR.getBytes());
         System.setProperty("user.dir", folder.getRoot().getAbsolutePath());
 
-        server = new FtpServer();
-        FtpProtocol protocol = new FtpProtocol();
-        server.start(portNumber, protocol);
+        server = new ThreadPooledServer(new FtpProtocol());
+        server.start(portNumber);
 
         Thread.sleep(500);
         client = new FtpClient("localhost", portNumber);
