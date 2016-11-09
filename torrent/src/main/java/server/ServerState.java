@@ -1,19 +1,55 @@
 package server;
 
-import lombok.Data;
+import client.Seeder;
+import lombok.RequiredArgsConstructor;
+import util.Pair;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-@Data
+// TODO think about constructor
+@RequiredArgsConstructor
 public class ServerState {
 
-    private Map<Integer, FileInfo> filesById;
-    private Map<Integer, List<Seeder>> seedersByFile;
-    private Map<Seeder, FileInfo> filesBySeeder;
+    private final Map<Integer, FileInfo> filesById = new HashMap<>();
+    private final Map<Integer, List<Seeder>> seedersByFile = new HashMap<>();
+    private final Map<Seeder, List<FileInfo>> filesBySeeder = new HashMap<>();
+    private final Map<Pair<Integer, Integer>, List<Seeder>> seederByFilePart = new HashMap<>();
 
-    public int upload(String name, long size) {
+    private int newFileId = 0;
+
+    public int upload(String name, long size, Seeder seeder) {
+        int newId = newFileId++;
+        ArrayList<Integer> parts = new ArrayList<Integer>();
+        int i = 0;
+        for (i = 0; i < size / FileInfo.PART_SIZE; i++) {
+            parts.add(i);
+        }
+        if (size % FileInfo.PART_SIZE > 0) {
+            parts.add(i + 1);
+        }
+        FileInfo fileInfo = new FileInfo(newId, parts, name, size);
+        filesById.put(newId, fileInfo);
         return 0;
+    }
+
+    public List<Seeder> getSeeders(int fileId, int part) {
+        return seederByFilePart.get(new Pair<>(fileId, part));
+    }
+
+    public List<Seeder> getSeeders(int fileId) {
+        return seedersByFile.get(fileId);
+    }
+
+    public void setFiles(Seeder seeder, List<FileInfo> fileInfos) {
+        filesBySeeder.put(seeder, fileInfos);
+    }
+
+    public FileInfo getFileInfo(int fileId) {
+        return filesById.get(fileId);
+    }
+
+    public Collection<FileInfo> allFiles() {
+        return filesById.values();
     }
 
     public boolean update(Short clientPort, int fileId) {

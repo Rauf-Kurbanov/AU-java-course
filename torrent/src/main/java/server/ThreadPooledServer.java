@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import protocol.Protocol;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -31,9 +29,10 @@ public class ThreadPooledServer implements Server {
                 Socket clientSocket = serverSocket.accept();
                 log.info("Exiting serverSocket.accept()");
 
-                DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-                executor.execute(() -> protocol.answerQuery(in, out, state));
+//                DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+//                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+//                executor.execute(() -> protocol.answerServerQuery(in, out, state));
+                executor.execute(() -> protocol.answerServerQuery(clientSocket, state));
                 log.info("Passed query processing");
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
