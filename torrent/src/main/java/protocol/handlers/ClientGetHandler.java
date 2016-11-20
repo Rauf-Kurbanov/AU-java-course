@@ -17,7 +17,7 @@ public class ClientGetHandler implements ClientRequestHandler {
         int fileId = in.readInt();
         int part = in.readInt();
 //        List<Seeder> seeders = state.getSeeders(fileId, part);
-//        Seeder seeder = seeders.get(new Random().nextInt(seeders.size()));
+//        Seeder seeder = seeders.get(new Random().nextInt(seeders.getFileSize()));
 
 //        final InetAddress ip = seeder.getIp();
         FileInfo fileInfo = state.getFileInfo(fileId);

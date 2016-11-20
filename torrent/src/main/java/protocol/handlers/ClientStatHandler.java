@@ -13,7 +13,7 @@ public class ClientStatHandler implements ClientRequestHandler {
 //    public void handle(DataInputStream in, DataOutputStream out) throws IOException {
 //        int fileId = in.readInt();
 //        Collection<Integer> parts = null;
-//        out.writeInt(parts.size());
+//        out.writeInt(parts.getFileSize());
 //        for (int p : parts) {
 //            out.writeInt(p);
 //        }

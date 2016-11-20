@@ -6,6 +6,7 @@ import protocol.handlers.RequestHandler;
 import server.ServerState;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
@@ -13,47 +14,32 @@ import java.util.HashMap;
 // TODO r
 public interface Protocol {
 
-    HashMap<Integer, RequestHandler> handlerByCommand = new HashMap<>();
-    HashMap<Integer, ClientRequestHandler> clientHandlerByCommand = new HashMap<>();
-
-//    default void answerServerQuery(DataInputStream in, DataOutputStream out, ServerState state) {
-//        try {
-//            int request;
-//            while ((request = in.readInt()) != -1) {
-//                if (!handlerByCommand.containsKey(request)) {
-//                    System.out.format("Unknown Command %d", request);
-//                }
-//                handlerByCommand.get(request).handle(in, out, state);
-//            }
-//        } catch (IOException e) {
-//            System.out.println("Socket was closed");
-//        }
-//    }
+    HashMap<Byte, RequestHandler> handlerByCommand = new HashMap<>();
+    HashMap<Byte, ClientRequestHandler> clientHandlerByCommand = new HashMap<>();
 
     default void answerServerQuery(Socket clientSocket, ServerState state) {
         try {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-//            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-            int request;
-            while ((request = in.readInt()) != -1) {
+            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+            byte request;
+            while ((request = in.readByte()) != -1) {
                 if (!handlerByCommand.containsKey(request)) {
-                    System.out.format("Unknown Command %d", request);
+                    System.out.format("Unknown Command %d\n", request);
                 }
-//                handlerByCommand.get(request).handle(in, out, state);
-                handlerByCommand.get(request).handle(clientSocket, state);
+                handlerByCommand.get(request).handle(in, out, clientSocket, state);
             }
         } catch (IOException e) {
             System.out.println("Socket was closed");
         }
     }
 
-    default void answeClientQuery(Socket serverToClientSocket, ClientState clientState) {
+    default void answerClientQuery(Socket serverToClientSocket, ClientState clientState) {
         try {
             DataInputStream in = new DataInputStream(serverToClientSocket.getInputStream());
             int request;
-            while ((request = in.readInt()) != -1) {
+            while ((request = in.readByte()) != -1) {
                 if (!clientHandlerByCommand.containsKey(request)) {
-                    System.out.format("Unknown Command %d", request);
+                    System.out.format("Unknown Command %d\n", request);
                 }
 //                clientHandlerByCommand.get(request).handle(in, out);
                 clientHandlerByCommand.get(request).handle(serverToClientSocket, clientState);
@@ -63,19 +49,4 @@ public interface Protocol {
         }
 
     }
-
-//    default void answeClientQuery(DataInputStream in, DataOutputStream out) {
-//        try {
-//            int request;
-//            while ((request = in.readInt()) != -1) {
-//                if (!clientHandlerByCommand.containsKey(request)) {
-//                    System.out.format("Unknown Command %d", request);
-//                }
-//                clientHandlerByCommand.get(request).handle(in, out);
-//            }
-//        } catch (IOException e) {
-//            System.out.println("Socket was closed");
-//        }
-//
-//    }
 }

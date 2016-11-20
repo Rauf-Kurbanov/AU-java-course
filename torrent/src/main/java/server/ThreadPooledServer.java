@@ -18,9 +18,13 @@ public class ThreadPooledServer implements Server {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Protocol protocol;
     private ServerSocket serverSocket;
-    private ServerState state = new ServerState();
+    private final ServerState state = new ServerState();
 
-    private void runServer(int portNumber) throws IOException {
+//    private void printState() {
+//        System.out.println(state.toString());
+//    }
+
+    private synchronized void runServer(int portNumber) throws IOException {
         log.info("Trying to accept socket");
         serverSocket = new ServerSocket(portNumber);
         while (!serverSocket.isClosed()) {
@@ -29,15 +33,16 @@ public class ThreadPooledServer implements Server {
                 Socket clientSocket = serverSocket.accept();
                 log.info("Exiting serverSocket.accept()");
 
-//                DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-//                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-//                executor.execute(() -> protocol.answerServerQuery(in, out, state));
-                executor.execute(() -> protocol.answerServerQuery(clientSocket, state));
+                synchronized (state) {
+                    executor.execute(() -> protocol.answerServerQuery(clientSocket, state));
+                }
+//                printState();
                 log.info("Passed query processing");
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
             }
         }
+        log.info("server main thread stops running");
     }
 
     @Override
@@ -59,6 +64,8 @@ public class ThreadPooledServer implements Server {
         } catch (IOException e) {
             throw new RuntimeException("Error closing server", e);
         }
-        executor.shutdown();
+        executor.shutdownNow();
+        serverThreadExecutor.shutdownNow();
+//        printState();
     }
 }

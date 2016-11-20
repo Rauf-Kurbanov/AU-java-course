@@ -33,7 +33,7 @@ public class Seeder implements Runnable {
 
                 DataInputStream in = new DataInputStream(clientSocket.getInputStream());
                 DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-                new Thread(() -> protocol.answeClientQuery(clientSocket, clientState));
+                new Thread(() -> protocol.answerClientQuery(clientSocket, clientState));
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
             }
