@@ -33,16 +33,19 @@ public interface Protocol {
         }
     }
 
+    // TODO check if recieves null
     default void answerClientQuery(Socket serverToClientSocket, ClientState clientState) {
         try {
             DataInputStream in = new DataInputStream(serverToClientSocket.getInputStream());
+            DataOutputStream out = new DataOutputStream(serverToClientSocket.getOutputStream());
             int request;
             while ((request = in.readByte()) != -1) {
                 if (!clientHandlerByCommand.containsKey(request)) {
                     System.out.format("Unknown Command %d\n", request);
                 }
 //                clientHandlerByCommand.get(request).handle(in, out);
-                clientHandlerByCommand.get(request).handle(serverToClientSocket, clientState);
+//                clientHandlerByCommand.get(request).handle(serverToClientSocket, clientState);
+                clientHandlerByCommand.get(request).handle(in, out, serverToClientSocket, clientState);
             }
         } catch (IOException e) {
             System.out.println("Socket was closed");

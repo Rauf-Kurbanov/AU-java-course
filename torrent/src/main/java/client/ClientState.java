@@ -1,13 +1,14 @@
 package client;
 
-import server.FileInfo;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ClientState {
 
-    private FileSystem fileSystem;
+    private final FileManager fileManager;
 
     // TODO
-    public FileInfo getFileInfo(int fileID) {
-        return null;
+    public FileHolder getFileInfo(int fileID) {
+        return fileManager.getDownloadedFile(fileID);
     }
 }

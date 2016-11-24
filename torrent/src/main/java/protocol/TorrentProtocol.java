@@ -15,6 +15,8 @@ import java.util.List;
 
 public class TorrentProtocol implements Protocol {
 
+    private static final int PART_SIZE = 10_000_000;
+
     private TorrentProtocol() {}
 
     @Getter
@@ -78,11 +80,27 @@ public class TorrentProtocol implements Protocol {
         return in.readBoolean();
     }
 
-    public void requestStat() {
+    public List<Integer> requestStat(DataInputStream in, DataOutputStream out,
+                                     int fileId) throws IOException {
+        out.writeByte(1);
+        out.writeByte(fileId);
 
+        int count = in.readInt();
+        final List<Integer> parts = new ArrayList<>();
+        while (count-- > 0) {
+            parts.add(in.readInt());
+        }
+        return parts;
     }
 
-    public void requestGet() {
+    public byte[] requestGet(DataInputStream in, DataOutputStream out,
+                             int fileId, int part) throws IOException {
+        out.writeByte(2);
+        out.writeInt(fileId);
+        out.writeInt(part);
 
+        byte[] content = new byte[PART_SIZE];
+        while (in.read(content) != -1) {}
+        return content;
     }
 }

@@ -1,5 +1,6 @@
 package server;
 
+import client.FileHolder;
 import client.Seeder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -35,9 +36,9 @@ public class ServerState {
     // TODO consider using arraylist instead
     // TODO remove getter
     @Getter
-    private final Map<Integer, FileInfo> filesById = new ConcurrentHashMap<>();
+    private final Map<Integer, FileHolder> filesById = new ConcurrentHashMap<>();
     private final Map<Integer, Set<SeederInfo>> seedersByFile = new ConcurrentHashMap<>();
-//    private final Map<Seeder, List<FileInfo>> filesBySeeder = new HashMap<>();
+//    private final Map<Seeder, List<FileHolder>> filesBySeeder = new HashMap<>();
     private final Map<Pair<Integer, Integer>, List<Seeder>> seederByFilePart = new HashMap<>();
 
     private final AtomicInteger newFileId = new AtomicInteger(0);
@@ -45,17 +46,17 @@ public class ServerState {
     public int upload(String name, long size) {
 //        System.out.printf("upload: name=%s size=%d\n", name, size);
         final int newId = newFileId.getAndIncrement();
-        ArrayList<Integer> parts = new ArrayList<Integer>();
-        // TODO rewrite prettier !!!
-        int i = 0;
-        for (i = 0; i < size / FileInfo.PART_SIZE; i++) {
-            parts.add(i);
-        }
-        if (size % FileInfo.PART_SIZE > 0) {
-            parts.add(i);
-        }
-        FileInfo fileInfo = new FileInfo(newId, parts, name, size);
-        filesById.put(newId, fileInfo);
+//        ArrayList<Integer> parts = new ArrayList<Integer>();
+//        // TODO rewrite prettier !!!
+//        int i = 0;
+//        for (i = 0; i < size / FileHolder.PART_SIZE; i++) {
+//            parts.add(i);
+//        }
+//        if (size % FileHolder.PART_SIZE > 0) {
+//            parts.add(i);
+//        }
+        FileHolder fileHolder = new FileHolder(newId, name, size);
+        filesById.put(newId, fileHolder);
 //        System.out.printf("newId = %s\n", newId);
         return newId;
     }
@@ -78,15 +79,15 @@ public class ServerState {
                 .collect(Collectors.toSet());
     }
 
-//    public void setFiles(Seeder seeder, List<FileInfo> fileInfos) {
+//    public void setFiles(Seeder seeder, List<FileHolder> fileInfos) {
 //        filesBySeeder.put(seeder, fileInfos);
 //    }
 
-//    public FileInfo getFileInfo(int fileId) {
+//    public FileHolder getDownloadedFile(int fileId) {
 //        return filesById.get(fileId);
 //    }
 
-    public Collection<FileInfo> allFiles() {
+    public Collection<FileHolder> allFiles() {
         ///
         System.out.println("allFiles");
         filesById.values().forEach(fi -> System.out.println(fi.toString()));

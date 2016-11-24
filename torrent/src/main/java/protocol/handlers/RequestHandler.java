@@ -11,6 +11,5 @@ import java.net.Socket;
 @FunctionalInterface
 public interface RequestHandler {
 
-//    void handle(DataInputStream in, DataOutputStream out, ServerState state) throws IOException;
     void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerState state) throws IOException;
 }

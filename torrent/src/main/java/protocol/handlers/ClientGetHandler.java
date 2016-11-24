@@ -1,18 +1,19 @@
 package protocol.handlers;
 
 import client.ClientState;
-import server.FileInfo;
+import client.FileHolder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+// TODO refactor
 public class ClientGetHandler implements ClientRequestHandler {
     @Override
-    public void handle(Socket clientSocket, ClientState state) throws IOException {
-        DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+    public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ClientState state) throws IOException {
+//        DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+//        DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
         int fileId = in.readInt();
         int part = in.readInt();
@@ -20,14 +21,14 @@ public class ClientGetHandler implements ClientRequestHandler {
 //        Seeder seeder = seeders.get(new Random().nextInt(seeders.getFileSize()));
 
 //        final InetAddress ip = seeder.getIp();
-        FileInfo fileInfo = state.getFileInfo(fileId);
-        boolean isLast = part  == fileInfo.getParts().size() - 1;
+        FileHolder fileHolder = state.getFileInfo(fileId);
+        boolean isLast = part  == fileHolder.getParts().size() - 1;
 
         byte[] content;
         if (!isLast) {
-            content = new byte[FileInfo.PART_SIZE];
+            content = new byte[FileHolder.PART_SIZE];
         } else {
-            final int lastPartSize = (int) fileInfo.getSize() % FileInfo.PART_SIZE;
+            final int lastPartSize = (int) fileHolder.getSize() % FileHolder.PART_SIZE;
             content = new byte[lastPartSize];
         }
 

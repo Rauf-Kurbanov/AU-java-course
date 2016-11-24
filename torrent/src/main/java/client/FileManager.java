@@ -10,15 +10,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
-public class FileSystem {
+public class FileManager {
 
     public final Path root;
-    // TODO maybe arraylist
     private Map<Integer, Path> serverFileIdToPath = new HashMap<>();
+    private Map<Integer, FileHolder> downloadingFiles = new ConcurrentHashMap<>();
 
     public void addToIndex(int fileId, String fileName) {
         final Path path = stringToPath(fileName);
@@ -31,8 +32,7 @@ public class FileSystem {
 
     public List<Path> allFiles() throws IOException {
         Stream<Path> paths = Files.walk(root);
-            return paths.filter(Files::isRegularFile).collect(Collectors.toList());
-//        }
+        return paths.filter(Files::isRegularFile).collect(Collectors.toList());
     }
 
     private Path stringToPath(String fileName) {
@@ -43,26 +43,28 @@ public class FileSystem {
         return allFiles().contains(stringToPath(fileName));
     }
 
+    public boolean isDownloading(int fileId) {
+        return downloadingFiles.containsKey(fileId);
+    }
+
     public long getFileSize(String fileName) {
         Path filePath = stringToPath(fileName);
         return filePath.toFile().length();
     }
 
-//    void add(Path file) {
-//        if (!file.startsWith(root)) {
-//            throw new InvalidPathException(String.format("path: %s should be subdirrectory of %s",
-//                    file, root));
-//        }
-//    }
-
-    public static void main(String[] args) throws IOException {
-        Path some = Paths.get("/home/rauf/Videos");
-        FileSystem fs = new FileSystem(some);
+    public FileHolder getDownloadedFile(int fileId) {
+        return downloadingFiles.get(fileId);
     }
 
-    private class InvalidPathException extends RuntimeException {
-        public InvalidPathException(String str) {
-            super(str);
-        }
+    public void startDownloading(final FileDescr fileDescr) {
+        final FileHolder fileHolder = new FileHolder(fileDescr.getId()
+                , fileDescr.getName()
+                , fileDescr.getSize()
+                , this);
+        downloadingFiles.put(fileDescr.getId(), fileHolder);
+    }
+
+    public Path newFile(String fileName) {
+        return Paths.get(root.toString(), fileName);
     }
 }

@@ -41,4 +41,25 @@ public class Main {
 
         System.out.println("the end");
     }
+
+//    public static void main(String[] args) throws IOException {
+//        final Path testDir = Paths.get("/home/rauf/Programs/semester_3/java/AU-java-course/torrent/testFolder");
+//        final Path file = Paths.get(testDir.toString(), "fsA/fileAA");
+//
+//        final InputStream in = new FileInputStream(file.toFile());
+//        final int BUFF_SIZE = 10_000_000;
+//        final byte[] content = new byte[BUFF_SIZE];
+//        while (in.read(content) != -1) {}
+//
+//        final int PART_SIZE = 2_000;
+//        final byte[] part1 = new byte[PART_SIZE];
+//        final byte[] part2 = new byte[BUFF_SIZE - PART_SIZE];
+//        System.arraycopy(content, 0, part1, 0, PART_SIZE);
+//        System.arraycopy(content, PART_SIZE, part2, 0, part2.length);
+//
+//        final Path toWrite = Paths.get(testDir.toString(), "fsA/fileAA_copy");
+//        FileOutputStream fos = new FileOutputStream(toWrite.toFile());
+//        fos.write(part1);
+//        fos.write(part2);
+//    }
 }

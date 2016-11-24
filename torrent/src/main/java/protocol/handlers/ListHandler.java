@@ -1,7 +1,7 @@
 package protocol.handlers;
 
+import client.FileHolder;
 import lombok.extern.slf4j.Slf4j;
-import server.FileInfo;
 import server.ServerState;
 
 import java.io.DataInputStream;
@@ -15,21 +15,21 @@ public class ListHandler implements RequestHandler {
     @Override
     public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerState state) throws IOException {
 //            log.info("list handler");
-        Collection<FileInfo> files = state.allFiles();
+        Collection<FileHolder> files = state.allFiles();
         out.writeInt(files.size());
-        for (FileInfo fi : files) {
-            out.writeInt(fi.getId());
-            out.writeUTF(fi.getName());
-            out.writeLong(fi.getSize());
+        for (FileHolder fh : files) {
+            out.writeInt(fh.getId());
+            out.writeUTF(fh.getName());
+            out.writeLong(fh.getSize());
         }
         out.flush();
 //            log.info("leaving list handler");
     }
 //    @Override
 //    public void handle(DataInputStream in, DataOutputStream out, ServerState state) throws IOException {
-//        Collection<FileInfo> files = state.getFilesById().values();
+//        Collection<FileHolder> files = state.getFilesById().values();
 //        out.writeInt(files.getFileSize());
-//        for (FileInfo fi : files) {
+//        for (FileHolder fi : files) {
 //            out.writeUTF(fi.getName());
 //            out.writeLong(fi.getSize());
 //        }

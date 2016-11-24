@@ -2,6 +2,8 @@ package protocol.handlers;
 
 import client.ClientState;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -10,5 +12,5 @@ import java.net.Socket;
 public interface ClientRequestHandler {
 
     //    void handle(DataInputStream in, DataOutputStream out, ServerState state) throws IOException;
-    void handle(Socket clientSocket, ClientState state) throws IOException;
+    void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ClientState state) throws IOException;
 }

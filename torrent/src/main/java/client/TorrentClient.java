@@ -4,9 +4,7 @@ import client.ex.FailedUpdateException;
 import com.sun.istack.internal.NotNull;
 import protocol.TorrentProtocol;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Path;
@@ -25,10 +23,9 @@ public class TorrentClient {
 
     @NotNull
     private final TorrentProtocol protocol = TorrentProtocol.getINSTANCE();
-//    private ServerSocket serverSocket;
     private Socket clientSocket;
     private Seeder seeder;
-    private final FileSystem fileSystem;
+    private final FileManager fileManager;
     private final DataInputStream in;
     private final DataOutputStream out;
     private final Timer timer = new Timer();
@@ -38,12 +35,12 @@ public class TorrentClient {
     }
 
     public void upload(String fileName) throws IOException {
-        checkArgument(fileSystem.contains(fileName),
-                String.format("file %s doesn't exist in %s", fileName, fileSystem.root.getFileName()));
+        checkArgument(fileManager.contains(fileName),
+                String.format("file %s doesn't exist in %s", fileName, fileManager.root.getFileName()));
 
-        final long fileSize = fileSystem.getFileSize(fileName);
+        final long fileSize = fileManager.getFileSize(fileName);
         final int serverFileId = protocol.requestUpload(in, out, fileName, fileSize);
-        fileSystem.addToIndex(serverFileId, fileName);
+        fileManager.addToIndex(serverFileId, fileName);
     }
 
     public List<Seeder> sources(int fileId) throws IOException {
@@ -51,12 +48,30 @@ public class TorrentClient {
     }
 
     private void update() throws IOException {
-        final Set<Integer> fileIds = fileSystem.allIds();
+        final Set<Integer> fileIds = fileManager.allIds();
         final short clientPort = (short) clientSocket.getPort();
         final boolean status = protocol.requestUpdate(in, out, clientPort, fileIds);
 
         if (!status) {
             throw new FailedUpdateException();
+        }
+    }
+
+    public List<Integer> stat(int fileId) throws IOException {
+        return protocol.requestStat(in, out, fileId);
+    }
+
+
+    // TODO why do I need whole FileDescr as argument?
+    public void getFile(FileDescr fileDescr) throws IOException {
+        final List<Integer> parts = stat(fileDescr.getId());
+        final int fileId = fileDescr.getId();
+        if (!fileManager.isDownloading(fileId)) {
+            fileManager.startDownloading(fileDescr);
+        }
+        final FileHolder fileHolder = fileManager.getDownloadedFile(fileId);
+        for (int partId : parts) {
+            fileHolder.readPart(partId, in);
         }
     }
 
@@ -80,10 +95,12 @@ public class TorrentClient {
 
         // TODO check port or localPort
         seeder = new Seeder(protocol, InetAddress.getByName(clientIp), port);
-        fileSystem = new FileSystem(fileSystemRoot);
+        fileManager = new FileManager(fileSystemRoot);
 
         scheduleUpdate();
     }
+
+
 
     public void disconnect() throws IOException {
         out.writeByte(-1);
