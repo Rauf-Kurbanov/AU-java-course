@@ -1,8 +1,8 @@
 package protocol.handlers;
 
-import client.FileHolder;
+import client.FileDescr;
 import lombok.extern.slf4j.Slf4j;
-import server.ServerState;
+import server.ServerData;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,26 +13,15 @@ import java.util.Collection;
 @Slf4j
 public class ListHandler implements RequestHandler {
     @Override
-    public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerState state) throws IOException {
-//            log.info("list handler");
-        Collection<FileHolder> files = state.allFiles();
+    public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerData state) throws IOException {
+        Collection<FileDescr> files = state.allFiles();
         out.writeInt(files.size());
-        for (FileHolder fh : files) {
-            out.writeInt(fh.getId());
-            out.writeUTF(fh.getName());
-            out.writeLong(fh.getSize());
+        for (FileDescr fd : files) {
+            out.writeInt(fd.getId());
+            out.writeUTF(fd.getName());
+            out.writeLong(fd.getSize());
         }
         out.flush();
-//            log.info("leaving list handler");
     }
-//    @Override
-//    public void handle(DataInputStream in, DataOutputStream out, ServerState state) throws IOException {
-//        Collection<FileHolder> files = state.getFilesById().values();
-//        out.writeInt(files.getFileSize());
-//        for (FileHolder fi : files) {
-//            out.writeUTF(fi.getName());
-//            out.writeLong(fi.getSize());
-//        }
-//    }
 }
 

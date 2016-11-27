@@ -1,54 +1,93 @@
 package client;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import protocol.Protocol;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
+// why?
 @EqualsAndHashCode
-public class Seeder implements Runnable {
+// make it implement server
+public class Seeder {
 
-    private ServerSocket serverSocket;
+    private final ExecutorService serverThreadExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    private ServerSocket serverSocket = createServerSocket();
     private final Protocol protocol;
-    @Getter
-    private final InetAddress ip;
-    @Getter
-    private final int port;
-//  TODO fill
-    private ClientState clientState = null;
+    private final FileManager fileManager;
 
-    private void runServer(int portNumber) throws IOException {
-        serverSocket = new ServerSocket(portNumber);
+    private ServerSocket createServerSocket() throws IOException {
+
+        int n_tries = 50;
+        final Random random = new Random();
+
+        ServerSocket toReturn = null;
+        while (n_tries-- > 0) {
+            int port = random.nextInt(Short.MAX_VALUE);
+            try {
+                toReturn = new ServerSocket(port);
+                System.out.printf("Generated port: %d\n", port);
+                break;
+            } catch (IllegalArgumentException | BindException e) {
+                continue;
+            }
+        }
+        if (n_tries == 0) {
+            throw new IOException("no free port found");
+        }
+        return toReturn;
+    }
+
+    public Seeder(Protocol protocol, final FileManager fileManager) throws IOException {
+        this.protocol = protocol;
+        this.fileManager = fileManager;
+    }
+
+    public short getPort() {
+        return (short) serverSocket.getLocalPort();
+    }
+
+    private void runServer() throws IOException {
         while (!serverSocket.isClosed()) {
             try {
                 Socket clientSocket = serverSocket.accept();
-
-                DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-                DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-                new Thread(() -> protocol.answerClientQuery(clientSocket, clientState));
+                // TODO reuse threadpooled server
+                executor.execute(() -> protocol.answerClientQuery(clientSocket, fileManager));
+//                new Thread(() -> protocol.answerClientQuery(clientSocket, fileManager));
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
             }
         }
     }
 
-    @Override
-    public void run() {
-        new Thread(() -> {
+//    @Override
+    public void start() {
+        serverThreadExecutor.execute(() -> {
             try {
-                runServer(port);
+                runServer();
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException("Can't start server", e);
             }
         });
+    }
 
+//    @Override
+    public void stop() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing server", e);
+        }
+        executor.shutdownNow();
+        serverThreadExecutor.shutdownNow();
+//        printState();
     }
 }

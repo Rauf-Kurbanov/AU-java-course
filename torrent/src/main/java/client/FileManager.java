@@ -18,12 +18,14 @@ import java.util.stream.Stream;
 public class FileManager {
 
     public final Path root;
-    private Map<Integer, Path> serverFileIdToPath = new HashMap<>();
-    private Map<Integer, FileHolder> downloadingFiles = new ConcurrentHashMap<>();
+    private final Map<Integer, Path> serverFileIdToPath = new HashMap<>();
+    private final Map<Integer, FileHolder> downloadingFiles = new ConcurrentHashMap<>();
+    private final Map<Integer, FileHolder> seededFiles = new ConcurrentHashMap<>();
 
-    public void addToIndex(int fileId, String fileName) {
+    public void addToIndex(int fileId, String fileName) throws IOException {
         final Path path = stringToPath(fileName);
         serverFileIdToPath.put(fileId, path);
+        seededFiles.put(fileId, new FileHolder(fileId, fileName, (int) path.toFile().length(), this, path));
     }
 
     public Set<Integer> allIds() {
@@ -52,8 +54,13 @@ public class FileManager {
         return filePath.toFile().length();
     }
 
-    public FileHolder getDownloadedFile(int fileId) {
+    // // TODO: 26.11.16 rename
+    public FileHolder getDownloadingFile(int fileId) {
         return downloadingFiles.get(fileId);
+    }
+
+    public FileHolder getSeededFile(int fileId) {
+        return seededFiles.get(fileId);
     }
 
     public void startDownloading(final FileDescr fileDescr) {

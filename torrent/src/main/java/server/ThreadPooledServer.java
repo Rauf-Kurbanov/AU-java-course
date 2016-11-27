@@ -18,11 +18,8 @@ public class ThreadPooledServer implements Server {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Protocol protocol;
     private ServerSocket serverSocket;
-    private final ServerState state = new ServerState();
+    private final ServerData state = new ServerData();
 
-//    private void printState() {
-//        System.out.println(state.toString());
-//    }
 
     private synchronized void runServer(int portNumber) throws IOException {
         log.info("Trying to accept socket");
@@ -30,13 +27,9 @@ public class ThreadPooledServer implements Server {
         while (!serverSocket.isClosed()) {
             try {
                 log.info("Entering serverSocket.accept()");
-                Socket clientSocket = serverSocket.accept();
+                final Socket clientSocket = serverSocket.accept();
                 log.info("Exiting serverSocket.accept()");
-
-                synchronized (state) {
-                    executor.execute(() -> protocol.answerServerQuery(clientSocket, state));
-                }
-//                printState();
+                executor.execute(() -> protocol.answerServerQuery(clientSocket, state));
                 log.info("Passed query processing");
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
@@ -51,7 +44,7 @@ public class ThreadPooledServer implements Server {
             try {
                 runServer(portNumber);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException("Can't start server", e);
             }
         });
     }
@@ -66,6 +59,5 @@ public class ThreadPooledServer implements Server {
         }
         executor.shutdownNow();
         serverThreadExecutor.shutdownNow();
-//        printState();
     }
 }

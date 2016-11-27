@@ -1,9 +1,10 @@
 package protocol;
 
 import client.FileDescr;
-import client.Seeder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import protocol.handlers.*;
+import server.SeederInfo;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,8 +14,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Slf4j
 public class TorrentProtocol implements Protocol {
 
+    // TODO shouldn't be here must came from FileHolder
     private static final int PART_SIZE = 10_000_000;
 
     private TorrentProtocol() {}
@@ -28,8 +31,8 @@ public class TorrentProtocol implements Protocol {
         handlerByCommand.put((byte) 3, new SourcesHandler());
         handlerByCommand.put((byte) 4, new UpdateHandler());
 
-        clientHandlerByCommand.put((byte) 1, new ClientStatHandler());
-        clientHandlerByCommand.put((byte) 2, new ClientGetHandler());
+        clientHandlerByCommand.put((byte) 1, new StatHandler());
+        clientHandlerByCommand.put((byte) 2, new GetHandler());
     }
 
     public List<FileDescr> requestList(DataInputStream in, DataOutputStream out) throws IOException {
@@ -39,7 +42,7 @@ public class TorrentProtocol implements Protocol {
         int count = in.readInt();
         System.out.println("list count = " + Integer.toString(count));
         while (count-- > 0) {
-            FileDescr fd = new FileDescr(in.readInt(), in.readUTF(), in.readLong());
+            final FileDescr fd = new FileDescr(in.readInt(), in.readUTF(), (int) in.readLong());
             res.add(fd);
         }
         return res;
@@ -54,23 +57,25 @@ public class TorrentProtocol implements Protocol {
         return in.readInt();
     }
 
-    public List<Seeder> requestSources(DataInputStream in, DataOutputStream out, int fileId) throws IOException {
+    public List<SeederInfo> requestSources(DataInputStream in, DataOutputStream out, int fileId) throws IOException {
         out.writeByte(3);
         out.writeInt(fileId);
 
-        List<Seeder> res = new ArrayList<>();
+        final List<SeederInfo> res = new ArrayList<>();
         int size = in.readInt();
         while (size-- > 0) {
             final byte[] ip = new byte[4];
             in.readFully(ip);
             final short port = in.readShort();
-            res.add(new Seeder(this, InetAddress.getByAddress(ip), port));
+            System.out.printf("port value in protocol: %d\n", port);
+            res.add(new SeederInfo(this, InetAddress.getByAddress(ip), port));
         }
         return res;
     }
 
     public boolean requestUpdate(DataInputStream in, DataOutputStream out,
                                  short clientPort, final Collection<Integer> fileIds) throws IOException {
+        out.writeByte(4);
         out.writeShort(clientPort);
         out.writeInt(fileIds.size());
         for (int fileId : fileIds) {
@@ -82,8 +87,9 @@ public class TorrentProtocol implements Protocol {
 
     public List<Integer> requestStat(DataInputStream in, DataOutputStream out,
                                      int fileId) throws IOException {
+        log.info("Sending stat request");
         out.writeByte(1);
-        out.writeByte(fileId);
+        out.writeInt(fileId);
 
         int count = in.readInt();
         final List<Integer> parts = new ArrayList<>();
@@ -95,12 +101,19 @@ public class TorrentProtocol implements Protocol {
 
     public byte[] requestGet(DataInputStream in, DataOutputStream out,
                              int fileId, int part) throws IOException {
+        log.info("Sending get request");
         out.writeByte(2);
         out.writeInt(fileId);
         out.writeInt(part);
 
+        // TODO fix similar code in FileHandler
         byte[] content = new byte[PART_SIZE];
-        while (in.read(content) != -1) {}
+        int totalRead = 0;
+        int justRead = 0;
+        while (totalRead < content.length && justRead != -1) {
+            justRead = in.read(content, totalRead, PART_SIZE - totalRead);
+            totalRead += justRead;
+        }
         return content;
     }
 }

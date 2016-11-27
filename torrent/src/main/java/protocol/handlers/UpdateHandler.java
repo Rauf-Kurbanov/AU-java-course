@@ -1,9 +1,9 @@
 package protocol.handlers;
 
-import client.Seeder;
 import lombok.extern.slf4j.Slf4j;
 import protocol.TorrentProtocol;
-import server.ServerState;
+import server.SeederInfo;
+import server.ServerData;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,21 +16,23 @@ import java.util.List;
 public class UpdateHandler implements RequestHandler {
     @Override
     public void handle(DataInputStream in, DataOutputStream out,
-                       Socket clientSocket, ServerState state) throws IOException {
+                       Socket clientSocket, ServerData state) throws IOException {
         log.info("handling update");
 
-        final short clientPort = in.readShort();
+        final short seederPort = in.readShort();
         int count = in.readInt();
         List<Integer> fileIDs = new ArrayList<>();
         while (count-- > 0) {
             fileIDs.add(in.readInt());
         }
-        final Seeder seeder = new Seeder(TorrentProtocol.getINSTANCE(), clientSocket.getInetAddress(), clientPort);
+        final SeederInfo seederInfo = new SeederInfo(TorrentProtocol.getINSTANCE()
+                , clientSocket.getInetAddress(), seederPort);
         for (int fileId : fileIDs) {
-            state.addSeeder(fileId, seeder);
+            state.addSeeder(fileId, seederInfo);
         }
 
         final boolean status = true;
         out.writeBoolean(status);
+        out.flush();
     }
 }

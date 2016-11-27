@@ -1,7 +1,7 @@
 package protocol.handlers;
 
-import client.Seeder;
-import server.ServerState;
+import server.SeederInfo;
+import server.ServerData;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -12,14 +12,17 @@ import java.util.Collection;
 public class SourcesHandler implements RequestHandler {
 
     @Override
-    public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerState state) throws IOException {
+    public void handle(DataInputStream in, DataOutputStream out, Socket clientSocket, ServerData state) throws IOException {
         int fileId = in.readInt();
-        final Collection<Seeder> seeders = state.getSeeders(fileId);
-        out.writeInt(seeders.size());
-        for (final Seeder s : seeders) {
-            final byte[] ip = s.getIp().getAddress();
+        final Collection<SeederInfo> seederInfos = state.getSeeders(fileId);
+        out.writeInt(seederInfos.size());
+        for (final SeederInfo s : seederInfos) {
+            final byte[] ip = s.getInetAddress().getAddress();
             out.write(ip);
-            out.writeShort(s.getPort());
+            final short port = s.getPort();
+            System.out.printf("port value in hander: %d\n", port);
+            out.writeShort(port);
+            out.flush();
         }
     }
 }

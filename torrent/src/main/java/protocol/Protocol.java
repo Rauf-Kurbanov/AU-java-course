@@ -1,9 +1,9 @@
 package protocol;
 
-import client.ClientState;
+import client.FileManager;
 import protocol.handlers.ClientRequestHandler;
 import protocol.handlers.RequestHandler;
-import server.ServerState;
+import server.ServerData;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -11,13 +11,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
 
-// TODO r
 public interface Protocol {
 
     HashMap<Byte, RequestHandler> handlerByCommand = new HashMap<>();
     HashMap<Byte, ClientRequestHandler> clientHandlerByCommand = new HashMap<>();
 
-    default void answerServerQuery(Socket clientSocket, ServerState state) {
+    default void answerServerQuery(Socket clientSocket, ServerData state) {
         try {
             DataInputStream in = new DataInputStream(clientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
@@ -33,18 +32,15 @@ public interface Protocol {
         }
     }
 
-    // TODO check if recieves null
-    default void answerClientQuery(Socket serverToClientSocket, ClientState clientState) {
+    default void answerClientQuery(Socket serverToClientSocket, FileManager clientState) {
         try {
             DataInputStream in = new DataInputStream(serverToClientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(serverToClientSocket.getOutputStream());
-            int request;
+            byte request;
             while ((request = in.readByte()) != -1) {
                 if (!clientHandlerByCommand.containsKey(request)) {
                     System.out.format("Unknown Command %d\n", request);
                 }
-//                clientHandlerByCommand.get(request).handle(in, out);
-//                clientHandlerByCommand.get(request).handle(serverToClientSocket, clientState);
                 clientHandlerByCommand.get(request).handle(in, out, serverToClientSocket, clientState);
             }
         } catch (IOException e) {
