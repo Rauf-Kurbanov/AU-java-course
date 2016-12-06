@@ -2,11 +2,11 @@ package client;
 
 import lombok.RequiredArgsConstructor;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,14 +18,15 @@ import java.util.stream.Stream;
 public class FileManager {
 
     public final Path root;
-    private final Map<Integer, Path> serverFileIdToPath = new HashMap<>();
+    private final Map<Integer, Path> serverFileIdToPath = new ConcurrentHashMap<>();
     private final Map<Integer, FileHolder> downloadingFiles = new ConcurrentHashMap<>();
     private final Map<Integer, FileHolder> seededFiles = new ConcurrentHashMap<>();
 
     public void addToIndex(int fileId, String fileName) throws IOException {
         final Path path = stringToPath(fileName);
+        final FileHolder fh = new FileHolder(fileId, fileName, (int) path.toFile().length(), this, true);
+        seededFiles.put(fileId, fh);
         serverFileIdToPath.put(fileId, path);
-        seededFiles.put(fileId, new FileHolder(fileId, fileName, (int) path.toFile().length(), this, path));
     }
 
     public Set<Integer> allIds() {
@@ -54,7 +55,6 @@ public class FileManager {
         return filePath.toFile().length();
     }
 
-    // // TODO: 26.11.16 rename
     public FileHolder getDownloadingFile(int fileId) {
         return downloadingFiles.get(fileId);
     }
@@ -63,15 +63,16 @@ public class FileManager {
         return seededFiles.get(fileId);
     }
 
-    public void startDownloading(final FileDescr fileDescr) {
+    public void startDownloading(FileDescr fileDescr) throws IOException {
         final FileHolder fileHolder = new FileHolder(fileDescr.getId()
                 , fileDescr.getName()
                 , fileDescr.getSize()
-                , this);
+                , this
+                , false);
         downloadingFiles.put(fileDescr.getId(), fileHolder);
     }
 
-    public Path newFile(String fileName) {
-        return Paths.get(root.toString(), fileName);
+    public File newFile(String fileName) throws IOException {
+        return Paths.get(root.toString(), fileName).toFile();
     }
 }

@@ -45,7 +45,6 @@ public class TorrentClient {
         final long fileSize = fileManager.getFileSize(fileName);
 
         final int serverFileId = protocol.requestUpload(in, out, fileName, fileSize);
-//        final oneElenetList = new
         final short seederPort = seeder.getPort();
         protocol.requestUpdate(in, out, seederPort, Collections.singleton(serverFileId));
 
@@ -69,14 +68,11 @@ public class TorrentClient {
     private List<Integer> stat(int fileId
             , DataInputStream seederIn, DataOutputStream seederOut) throws IOException {
         log.info("Client stat");
-//        return protocol.requestStat(seederIn, seederOut, fileId);
         return protocol.requestStat(seederIn, seederOut, fileId);
     }
 
-    // TODO why do I need whole FileDescr as argument?
+    // Do I need whole FileDescr as argument?
     public void getFile(FileDescr fileDescr, SeederInfo seederInfo) throws IOException {
-//        log.info(String.format("Client: getFile: %s from %s", fileDescr.toString(), seederInfo.toString()));
-        System.out.println("!!!!!!!!!!!!!!!!!!!!Seeder port:" + seederInfo.getPort() + "\n");
         final Socket p2pSocket = new Socket(seederInfo.getInetAddress(), seederInfo.getPort());
         final DataInputStream seederIn = new DataInputStream(p2pSocket.getInputStream());
         final DataOutputStream seederOut = new DataOutputStream(p2pSocket.getOutputStream());
@@ -91,7 +87,6 @@ public class TorrentClient {
         final FileHolder fileHolder = fileManager.getDownloadingFile(fileId);
         for (int partId : parts) {
             // TODO refactor
-//            final byte[] content = protocol.requestGet(seederIn, seederOut, fileId, partId);
             final byte[] content = protocol.requestGet(seederIn, seederOut, fileId, partId);
             fileHolder.readPart(partId, new ByteArrayInputStream(content));
         }
@@ -119,7 +114,6 @@ public class TorrentClient {
         in = new DataInputStream(clientSocket.getInputStream());
         out = new DataOutputStream(clientSocket.getOutputStream());
 
-        // TODO check port or localPort
         fileManager = new FileManager(fileSystemRoot);
         seeder = new Seeder(protocol, fileManager);
         seeder.start();

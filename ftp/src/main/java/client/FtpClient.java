@@ -1,5 +1,6 @@
 package client;
 
+import lombok.NoArgsConstructor;
 import protocol.FtpFile;
 import protocol.FtpProtocol;
 
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
+@NoArgsConstructor
 public class FtpClient extends Client {
 
     private final FtpProtocol protocol = new FtpProtocol();
