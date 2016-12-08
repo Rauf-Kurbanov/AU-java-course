@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 public class LargeFileTest {
 
-
     private Server torrentServer;
     private TorrentClient clientA;
     private TorrentClient clientB;
@@ -34,7 +33,7 @@ public class LargeFileTest {
 
     @Before
     public void setUp() throws Exception {
-        torrentServer = new ThreadPooledServer(TorrentProtocol.getINSTANCE());
+        torrentServer = new ThreadPooledServer(TorrentProtocol.INSTANCE);
         final int portNumber = 8081;
         torrentServer.start(portNumber);
         tmpFolder.create();

@@ -1,6 +1,6 @@
 package protocol;
 
-import client.FileManager;
+import client.Seeder;
 import protocol.handlers.ClientRequestHandler;
 import protocol.handlers.RequestHandler;
 import server.ServerData;
@@ -32,7 +32,8 @@ public interface Protocol {
         }
     }
 
-    default void answerClientQuery(Socket serverToClientSocket, FileManager clientState) {
+//    default void answerClientQuery(Socket serverToClientSocket, FileManager clientState) {
+    default void answerClientQuery(Socket serverToClientSocket, Seeder clientState) {
         try {
             DataInputStream in = new DataInputStream(serverToClientSocket.getInputStream());
             DataOutputStream out = new DataOutputStream(serverToClientSocket.getOutputStream());

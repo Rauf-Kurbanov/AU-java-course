@@ -33,7 +33,7 @@ public class TorrentClientTest {
 
     @Before
     public void setUp() throws Exception {
-        torrentServer = new ThreadPooledServer(TorrentProtocol.getINSTANCE());
+        torrentServer = new ThreadPooledServer(TorrentProtocol.INSTANCE);
         final int portNumber = 8081;
         torrentServer.start(portNumber);
         tmpFolder.create();
@@ -105,6 +105,8 @@ public class TorrentClientTest {
         final File leecherFile = new File(fsB, fileA.getName());
 
         clientB.getFile(first, heGotFile);
+        while (clientB.getStatus(fileA.getName()) == FileStatus.NOT_READY) {
+        }
         assertEquals(FileUtils.readLines(seederFile, "UTF-8")
                 , FileUtils.readLines(leecherFile , "UTF-8"));
     }
@@ -122,6 +124,8 @@ public class TorrentClientTest {
         final File leecherFile = new File(fsB, fileB.getName());
 
         clientB.getFile(first, heGotFile);
+        while (clientB.getStatus(fileB.getName()) == FileStatus.NOT_READY) {
+        }
         assertEquals(FileUtils.readLines(seederFile, "UTF-8")
                 , FileUtils.readLines(leecherFile , "UTF-8"));
     }

@@ -25,7 +25,7 @@ public class UpdateHandler implements RequestHandler {
         while (count-- > 0) {
             fileIDs.add(in.readInt());
         }
-        final SeederInfo seederInfo = new SeederInfo(TorrentProtocol.getINSTANCE()
+        final SeederInfo seederInfo = new SeederInfo(TorrentProtocol.INSTANCE
                 , clientSocket.getInetAddress(), seederPort);
         for (int fileId : fileIDs) {
             state.addSeeder(fileId, seederInfo);

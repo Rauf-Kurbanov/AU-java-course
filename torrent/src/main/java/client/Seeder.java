@@ -3,13 +3,20 @@ package client;
 import lombok.EqualsAndHashCode;
 import protocol.Protocol;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 //@RequiredArgsConstructor
 // why?
@@ -21,8 +28,12 @@ public class Seeder {
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     private ServerSocket serverSocket = createServerSocket();
+    // TODO maybr not an argument
     private final Protocol protocol;
     private final FileManager fileManager;
+
+    private final Map<Integer, FileHolder> seededFiles = new ConcurrentHashMap<>();
+    private final Map<Integer, Path> serverFileIdToPath = new ConcurrentHashMap<>();
 
     private ServerSocket createServerSocket() throws IOException {
 
@@ -59,9 +70,7 @@ public class Seeder {
         while (!serverSocket.isClosed()) {
             try {
                 Socket clientSocket = serverSocket.accept();
-                // TODO reuse threadpooled server
-                executor.execute(() -> protocol.answerClientQuery(clientSocket, fileManager));
-//                new Thread(() -> protocol.answerClientQuery(clientSocket, fileManager));
+                executor.execute(() -> protocol.answerClientQuery(clientSocket, this));
             } catch (IOException e) {
                 System.out.println("Cannot open client socket");
             }
@@ -88,6 +97,29 @@ public class Seeder {
         }
         executor.shutdownNow();
         serverThreadExecutor.shutdownNow();
-//        printState();
     }
+
+    public long getFileSizeToUpload(String fileName) throws IOException {
+        checkArgument(fileManager.contains(fileName),
+                String.format("file %s doesn't exist in %s", fileName, fileManager.root.getFileName()));
+        return fileManager.getFileSize(fileName);
+    }
+
+    public void addToIndex(int fileId, String fileName) throws IOException {
+        File file = fileManager.newFile(fileName);
+//        final FileHolder fh = new FileHolder(fileId, fileName, (int) file.length(), file, true);
+//        final FileHolder fh = new FileHolder(fileId, fileName, file, true);
+        final FileHolder fileHolder = FileHolder.seededHolder(fileId, fileName, file);
+        seededFiles.put(fileId, fileHolder);
+        serverFileIdToPath.put(fileId, file.toPath());
+    }
+
+    public Set<Integer> allIds() {
+        return serverFileIdToPath.keySet();
+    }
+
+    public FileHolder getSeededFile(int fileId) {
+        return seededFiles.get(fileId);
+    }
+
 }

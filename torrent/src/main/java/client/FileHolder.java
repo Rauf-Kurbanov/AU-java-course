@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -26,24 +27,32 @@ public class FileHolder {
     @Getter
     private int size;
 
-    private final FileManager fileManager;
+    private final File file;
     private final boolean[] initalized;
+    @Getter
     private final int nParts;
-
-    // TODO redesign
-    public FileHolder(int id, String name, int size, final FileManager fileManager, boolean exists) throws IOException {
+    @Getter
+    private int acquiredParts = 0;
+    
+    private FileHolder(int id, String name, int size, File file) throws IOException {
         this.id = id;
         this.name = name;
         this.size = size;
-        this.fileManager = fileManager;
+        this.file = file;
 
-//        http://stackoverflow.com/questions/7139382/java-rounding-up-to-an-int-using-math-ceil
+        // http://stackoverflow.com/questions/7139382/java-rounding-up-to-an-int-using-math-ceil
         nParts = (size + PART_SIZE - 1) / PART_SIZE;
         initalized = new boolean[nParts];
+    }
 
-        if (exists) {
-            Arrays.fill(initalized, true);
-        }
+    public static FileHolder seededHolder(int id, String name, final File file) throws IOException {
+        final FileHolder fileHolder = new FileHolder(id, name, (int) file.length(), file);
+        Arrays.fill(fileHolder.initalized, true);
+        return fileHolder;
+    }
+
+    public static FileHolder leechedHolder(int id, String name, int size, final File file) throws IOException {
+        return new FileHolder(id, name, size, file);
     }
 
     private int partSize(int partId) {
@@ -60,7 +69,7 @@ public class FileHolder {
         int readLast = 0;
         final int partSize = partSize(partId);
 
-        try (final RandomAccessFile raFile = new RandomAccessFile(fileManager.newFile(name), "r")) {
+        try (final RandomAccessFile raFile = new RandomAccessFile(file, "r")) {
             raFile.seek(partId * PART_SIZE);
 
             while (readTotal < partSize && readLast != -1) {
@@ -78,7 +87,7 @@ public class FileHolder {
         return content;
     }
 
-    public void readPart(int partId, InputStream in) throws IOException {
+    public FileStatus readPart(int partId, InputStream in) throws IOException {
         log.info("Calling readPart");
         final byte[] content = new byte[PART_SIZE];
         int readTotal = 0;
@@ -94,12 +103,22 @@ public class FileHolder {
                     , String.format("Got &d bytes instead of &d", readTotal, PART_SIZE));
             throw new PartReadException(msg);
         }
-        initalized[partId] = true;
 
-        try (final RandomAccessFile raFile = new RandomAccessFile(fileManager.newFile(name), "rw")) {
+        try (final RandomAccessFile raFile = new RandomAccessFile(file, "rw")) {
             raFile.seek(partId * PART_SIZE);
             raFile.write(content, 0, partSize(partId));
         }
+
+        initalized[partId] = true;
+        acquiredParts++;
+
+        boolean isReady = true;
+        for (boolean b : initalized) {
+            if (!b) {
+                isReady = false;
+            }
+        }
+        return isReady ? FileStatus.READY : FileStatus.NOT_READY;
     }
 
     public List<Integer> getParts() {

@@ -22,7 +22,6 @@ public class TorrentProtocol implements Protocol {
 
     private TorrentProtocol() {}
 
-    @Getter
     public static final TorrentProtocol INSTANCE = new TorrentProtocol();
 
     static {
