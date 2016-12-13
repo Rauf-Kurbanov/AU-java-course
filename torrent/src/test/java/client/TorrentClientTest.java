@@ -10,8 +10,12 @@ import protocol.TorrentProtocol;
 import server.SeederInfo;
 import server.Server;
 import server.ThreadPooledServer;
+import util.Serializer;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,10 +35,11 @@ public class TorrentClientTest {
     @Rule
     public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
+    private static final int portNumber = 8081;
+
     @Before
     public void setUp() throws Exception {
         torrentServer = new ThreadPooledServer(TorrentProtocol.INSTANCE);
-        final int portNumber = 8081;
         torrentServer.start(portNumber);
         tmpFolder.create();
 
@@ -79,18 +84,18 @@ public class TorrentClientTest {
         assertEquals(expected, actual);
     }
 
-    @Test
-    public void sources() throws Exception {
-        clientA.upload(fileA.getName());
-        clientA.upload(fileB.getName());
-
-        final List<FileDescr> listingB = clientB.list();
-        assertEquals(2, listingB.size());
-
-        final FileDescr first = listingB.get(0);
-        final List<SeederInfo> sis = clientB.sources(first.getId());
-        assertEquals(1, sis.size());
-    }
+//    @Test
+//    public void sources() throws Exception {
+//        clientA.upload(fileA.getName());
+//        clientA.upload(fileB.getName());
+//
+//        final List<FileDescr> listingB = clientB.list();
+//        assertEquals(2, listingB.size());
+//
+//        final FileDescr first = listingB.get(0);
+//        final List<SeederInfo> sis = clientB.sources(first.getId());
+//        assertEquals(1, sis.size());
+//    }
 
     @Test
     public void getFileLtPartSize() throws Exception {
@@ -98,13 +103,15 @@ public class TorrentClientTest {
 
         final List<FileDescr> listingB = clientB.list();
         final FileDescr first = listingB.get(0);
-        final List<SeederInfo> sis = clientB.sources(first.getId());
-        final SeederInfo heGotFile = sis.get(0);
+        clientB.pullSources(first.getId());
 
         final File seederFile = new File(fileA.getPath());
+        System.out.println(seederFile.exists());
         final File leecherFile = new File(fsB, fileA.getName());
+        System.out.println(leecherFile.exists());
 
-        clientB.getFile(first, heGotFile);
+        clientB.getFile(first);
+        System.out.println("before ready check");
         while (clientB.getStatus(fileA.getName()) == FileStatus.NOT_READY) {
         }
         assertEquals(FileUtils.readLines(seederFile, "UTF-8")
@@ -117,16 +124,42 @@ public class TorrentClientTest {
 
         final List<FileDescr> listingB = clientB.list();
         final FileDescr first = listingB.get(0);
-        final List<SeederInfo> sis = clientB.sources(first.getId());
-        final SeederInfo heGotFile = sis.get(0);
+        clientB.pullSources(first.getId());
 
         final File seederFile = new File(fileB.getPath());
         final File leecherFile = new File(fsB, fileB.getName());
 
-        clientB.getFile(first, heGotFile);
+        clientB.getFile(first);
         while (clientB.getStatus(fileB.getName()) == FileStatus.NOT_READY) {
         }
         assertEquals(FileUtils.readLines(seederFile, "UTF-8")
                 , FileUtils.readLines(leecherFile , "UTF-8"));
     }
+
+    @Test
+    public void serializeSimple() throws IOException, ClassNotFoundException {
+        clientA.pause();
+        clientA = TorrentClient.resume("127.0.0.1", portNumber, fsA.toPath());
+    }
+
+    @Test
+    public void serializeGet() throws IOException, ClassNotFoundException, InterruptedException {
+        clientA.upload(fileB.getName());
+
+        final List<FileDescr> listingB = clientB.list();
+        final FileDescr first = listingB.get(0);
+        clientB.pullSources(first.getId());
+
+        clientB.getFile(first);
+
+        while (clientB.getStatus(fileB.getName()) == FileStatus.NOT_READY) {
+        }
+        clientB.pause();
+        final FileStatus expecterStatus = clientB.getStatus(first.getName());
+
+        clientB = TorrentClient.resume("127.0.0.1", portNumber, fsB.toPath());
+
+        assertEquals(expecterStatus, clientB.getStatus(first.getName()));
+    }
+
 }

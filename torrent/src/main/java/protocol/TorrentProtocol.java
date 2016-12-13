@@ -17,7 +17,6 @@ import java.util.List;
 @Slf4j
 public class TorrentProtocol implements Protocol {
 
-    // TODO shouldn't be here must came from FileHolder
     private static final int PART_SIZE = 10_000_000;
 
     private TorrentProtocol() {}
@@ -105,7 +104,6 @@ public class TorrentProtocol implements Protocol {
         out.writeInt(fileId);
         out.writeInt(part);
 
-        // TODO fix similar code in FileHandler
         byte[] content = new byte[PART_SIZE];
         int totalRead = 0;
         int justRead = 0;

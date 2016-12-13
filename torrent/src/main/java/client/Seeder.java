@@ -1,10 +1,12 @@
 package client;
 
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import protocol.Protocol;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,24 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static client.FileStatus.READY;
 import static com.google.common.base.Preconditions.checkArgument;
 
-//@RequiredArgsConstructor
-// why?
 @EqualsAndHashCode
-// make it implement server
-public class Seeder {
+public class Seeder implements Serializable {
 
     private final ExecutorService serverThreadExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     private ServerSocket serverSocket = createServerSocket();
-    // TODO maybr not an argument
     private final Protocol protocol;
     private final FileManager fileManager;
-
-    private final Map<Integer, FileHolder> seededFiles = new ConcurrentHashMap<>();
-    private final Map<Integer, Path> serverFileIdToPath = new ConcurrentHashMap<>();
 
     private ServerSocket createServerSocket() throws IOException {
 
@@ -56,8 +52,7 @@ public class Seeder {
         }
         return toReturn;
     }
-
-    public Seeder(Protocol protocol, final FileManager fileManager) throws IOException {
+    public Seeder(Protocol protocol, FileManager fileManager) throws IOException {
         this.protocol = protocol;
         this.fileManager = fileManager;
     }
@@ -77,7 +72,6 @@ public class Seeder {
         }
     }
 
-//    @Override
     public void start() {
         serverThreadExecutor.execute(() -> {
             try {
@@ -88,7 +82,6 @@ public class Seeder {
         });
     }
 
-//    @Override
     public void stop() {
         try {
             serverSocket.close();
@@ -101,25 +94,13 @@ public class Seeder {
 
     public long getFileSizeToUpload(String fileName) throws IOException {
         checkArgument(fileManager.contains(fileName),
-                String.format("file %s doesn't exist in %s", fileName, fileManager.root.getFileName()));
+                String.format("file %s doesn't exist in %s", fileName, fileManager.root));
         return fileManager.getFileSize(fileName);
     }
 
-    public void addToIndex(int fileId, String fileName) throws IOException {
-        File file = fileManager.newFile(fileName);
-//        final FileHolder fh = new FileHolder(fileId, fileName, (int) file.length(), file, true);
-//        final FileHolder fh = new FileHolder(fileId, fileName, file, true);
-        final FileHolder fileHolder = FileHolder.seededHolder(fileId, fileName, file);
-        seededFiles.put(fileId, fileHolder);
-        serverFileIdToPath.put(fileId, file.toPath());
-    }
-
-    public Set<Integer> allIds() {
-        return serverFileIdToPath.keySet();
-    }
-
     public FileHolder getSeededFile(int fileId) {
-        return seededFiles.get(fileId);
+        return fileManager.getFileHolder(fileId);
     }
+
 
 }

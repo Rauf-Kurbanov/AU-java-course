@@ -77,19 +77,19 @@ public class LargeFileTest {
         System.out.println(actual.toString());
         assertEquals(expected, actual);
     }
-
-    @Test
-    public void sources() throws Exception {
+//
+//    @Test
+//    public void sources() throws Exception {
+////        clientA.upload(largeFile.getName());
 //        clientA.upload(largeFile.getName());
-        clientA.upload(largeFile.getName());
-
-        final List<FileDescr> listingB = clientB.list();
-        assertEquals(1, listingB.size());
-
-        final FileDescr first = listingB.get(0);
-        final List<SeederInfo> sis = clientB.sources(first.getId());
-        assertEquals(1, sis.size());
-    }
+//
+//        final List<FileDescr> listingB = clientB.list();
+//        assertEquals(1, listingB.size());
+//
+//        final FileDescr first = listingB.get(0);
+//        final List<SeederInfo> sis = clientB.sources(first.getId());
+//        assertEquals(1, sis.size());
+//    }
 
     @Test
     public void getFile() throws Exception {
@@ -97,13 +97,15 @@ public class LargeFileTest {
 
         final List<FileDescr> listingB = clientB.list();
         final FileDescr first = listingB.get(0);
-        final List<SeederInfo> sis = clientB.sources(first.getId());
-        final SeederInfo heGotFile = sis.get(0);
+//        final List<SeederInfo> sis = clientB.sources(first.getId());
+//        final SeederInfo heGotFile = sis.get(0);
 
         final File seederFile = new File(largeFile.getPath());
         final File leecherFile = new File(fsB, largeFile.getName());
 
-        clientB.getFile(first, heGotFile);
+        clientB.pullSources(first.getId());
+//        clientB.getFile(first, heGotFile);
+        clientB.getFile(first);
         assertEquals(FileUtils.readLines(seederFile, "UTF-8")
                 , FileUtils.readLines(leecherFile , "UTF-8"));
     }

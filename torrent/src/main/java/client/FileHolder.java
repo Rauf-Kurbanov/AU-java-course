@@ -5,18 +5,16 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
 @ToString
-public class FileHolder {
+public class FileHolder implements Serializable {
 
     public static final int PART_SIZE = 10_000_000;
 
@@ -31,9 +29,15 @@ public class FileHolder {
     private final boolean[] initalized;
     @Getter
     private final int nParts;
-    @Getter
-    private int acquiredParts = 0;
-    
+    private AtomicInteger acquiredParts = new AtomicInteger(0);
+
+    public FileStatus getStatus() {
+        return nParts == acquiredParts.get() ? FileStatus.READY : FileStatus.NOT_READY;
+    }
+
+    public int getAcquiredParts() {
+        return acquiredParts.get();
+    }
     private FileHolder(int id, String name, int size, File file) throws IOException {
         this.id = id;
         this.name = name;
@@ -110,7 +114,7 @@ public class FileHolder {
         }
 
         initalized[partId] = true;
-        acquiredParts++;
+        acquiredParts.getAndIncrement();
 
         boolean isReady = true;
         for (boolean b : initalized) {
